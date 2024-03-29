@@ -1,0 +1,55 @@
+# name of the action
+name: reviewdog
+
+# trigger on pull_request events
+on:
+  pull_request:
+
+# pipeline to execute
+jobs:
+  diff-review:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: clone
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    - name: install go
+      uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      with:
+        # use version from go.mod file
+        go-version-file: 'go.mod'
+        cache: true
+        check-latest: true
+
+    - name: golangci-lint
+      uses: reviewdog/action-golangci-lint@8e1117c7d327bbfb1eb7ec8dc2d895d13e6e17c3 # v2.6.0
+      with:
+        github_token: ${{ secrets.github_token }}
+        golangci_lint_flags: "--config=.golangci.yml"
+        fail_on_error: true
+        filter_mode: diff_context
+        reporter: github-pr-review
+
+  full-review:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: clone
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    - name: install go
+      uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      with:
+        # use version from go.mod file
+        go-version-file: 'go.mod'
+        cache: true
+        check-latest: true
+
+    - name: golangci-lint
+      uses: reviewdog/action-golangci-lint@8e1117c7d327bbfb1eb7ec8dc2d895d13e6e17c3 # v2.6.0
+      with:
+        github_token: ${{ secrets.github_token }}
+        golangci_lint_flags: "--config=.golangci.yml"
+        fail_on_error: false
+        filter_mode: nofilter
