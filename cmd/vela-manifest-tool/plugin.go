@@ -90,6 +90,7 @@ func (p *Plugin) Exec() error {
 		if err != nil {
 			return err
 		}
+
 		fmt.Printf("Rendered spec file:\n%s\n", data.String())
 		specFilename := fmt.Sprintf("/root/specs/spec_%d.yml", i)
 		a.WriteFile(specFilename, data.Bytes(), 0644)

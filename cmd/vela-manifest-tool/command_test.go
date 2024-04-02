@@ -35,16 +35,19 @@ func TestExecution(t *testing.T) {
 	oldStderr := stderr
 	defer func() { stderr = oldStderr }()
 	for _, tc := range cases {
-		var out, err bytes.Buffer
+		var outbuf, errbuf bytes.Buffer
 
-		stdout, stderr = &out, &err
+		stdout, stderr = &outbuf, &errbuf
 		cmd := exec.Command(tc.args[0], tc.args[1:]...)
-		execCmd(cmd)
-		if tc.expout != out.String() {
-			t.Errorf("Expected %q to be equal to %q", out.String(), tc.expout)
+		err := execCmd(cmd)
+		if err != nil {
+			t.Errorf("Expected no error when creating command: %v", err)
 		}
-		if tc.experr != err.String() {
-			t.Errorf("Expected %q to be equal to %q", err.String(), tc.experr)
+		if tc.expout != outbuf.String() {
+			t.Errorf("Expected %q to be equal to %q", outbuf.String(), tc.expout)
+		}
+		if tc.experr != errbuf.String() {
+			t.Errorf("Expected %q to be equal to %q", errbuf.String(), tc.experr)
 		}
 	}
 }

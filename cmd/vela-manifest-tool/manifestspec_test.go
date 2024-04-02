@@ -3,7 +3,13 @@ package main
 import (
 	"bytes"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 )
+
+func init() {
+	logrus.SetFormatter(&logrus.TextFormatter{})
+}
 
 func TestManifestSpec_New_Validate(t *testing.T) {
 	man := defaultFixture(t)
@@ -14,7 +20,10 @@ func TestManifestSpec_New_Validate(t *testing.T) {
 	assertImageMatch(t, "index.docker.io/octocat/hello-world:latest-linux-arm64-v8",
 		man.Manifests[1].Image)
 	var data bytes.Buffer
-	man.Render(&data)
+	err := man.Render(&data)
+	if err != nil {
+		t.Errorf("Error encountered during render: %v", err)
+	}
 	expected := "image: index.docker.io/octocat/hello-world:latest\n" +
 		"manifests:\n" +
 		"- image: index.docker.io/octocat/hello-world:latest-linux-amd64\n" +
@@ -51,11 +60,38 @@ func TestManifestSpec_Validations(t *testing.T) {
 			ms:    trMS(t, func(ms *ManifestSpec) *ManifestSpec { ms.Image = ""; return ms }),
 		},
 		{
+			name:  "invalid image",
+			valid: false,
+			avail: false,
+			ms: firstMS(NewManifestSpec(trReg(func(r *Registry) *Registry {
+				r.Name = ""
+				return r
+			}), defaultRepo())),
+		},
+		{
+			name:  "invalid reg",
+			valid: false,
+			avail: false,
+			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
+				r.Name = ""
+				return r
+			}))),
+		},
+		{
 			name:  "invalid platform",
 			valid: false,
 			avail: false,
 			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
 				r.Platforms = []string{"linux"}
+				return r
+			}))),
+		},
+		{
+			name:  "incomplete template",
+			valid: false,
+			avail: true,
+			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
+				r.ComponentTemplate = "{{.Repo}}"
 				return r
 			}))),
 		},
@@ -79,9 +115,8 @@ func TestManifestSpec_Validations(t *testing.T) {
 func firstMS(ms []*ManifestSpec, _ error) *ManifestSpec {
 	if len(ms) > 0 {
 		return ms[0]
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func defaultRegistry() *Registry {

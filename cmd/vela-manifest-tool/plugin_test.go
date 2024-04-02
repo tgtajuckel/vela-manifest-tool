@@ -41,6 +41,14 @@ func TestPluginScenarios(t *testing.T) {
 			valid: false,
 			p:     trP(func(p *Plugin) *Plugin { p.Registry.Name = ""; return p }),
 		},
+		{
+			name:  "invalid template variable",
+			valid: false,
+			p: trP(func(p *Plugin) *Plugin {
+				p.Repo.ComponentTemplate = "{{.Res}}"
+				return p
+			}),
+		},
 	}
 	for _, tc := range testCases {
 		err := tc.p.Validate()
@@ -70,7 +78,7 @@ func makeDefaultPlugin() *Plugin {
 			Name:              "project/image",
 			Tags:              []string{"latest", "v0.0.0"},
 			Platforms:         []string{"linux/amd64", "linux/arm64/v8"},
-			ComponentTemplate: "{{.Registry.Name}}/{{.Repo.Name}}:{{.Tag}}",
+			ComponentTemplate: "{{.Repo}}:{{.Tag}}-{{.Os}}-{{.Arch}}{{if .Variant}}-{{.Variant}}{{end}}",
 		},
 	}
 }

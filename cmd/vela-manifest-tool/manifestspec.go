@@ -58,6 +58,13 @@ func NewManifestSpec(reg *Registry, repo *Repo) ([]*ManifestSpec, error) {
 	if err != nil {
 		return specs, err
 	}
+
+	if len(reg.Name) == 0 {
+		return specs, fmt.Errorf("no registry name provided")
+	}
+	if len(repo.Name) == 0 {
+		return specs, fmt.Errorf("no repository name provided")
+	}
 	for _, tag := range repo.Tags {
 		ms := ManifestSpec{
 			Image:     reg.Name + repo.Name + ":" + tag,
@@ -80,10 +87,13 @@ func NewManifestSpec(reg *Registry, repo *Repo) ([]*ManifestSpec, error) {
 				Variant: platformComp[2],
 			}
 			var compImgBuf bytes.Buffer
-			tmpl.Execute(&compImgBuf, ctx)
+			err = tmpl.Execute(&compImgBuf, ctx)
+			if err != nil {
+				return specs, err
+			}
 			compImg := compImgBuf.String()
 			comp := ManifestComponent{
-				Image: reg.Name + compImg,
+				Image: fmt.Sprintf("%s%s", reg.Name, compImg),
 				Platform: ManifestPlatform{
 					Os:           ctx.Os,
 					Architecture: ctx.Arch,
@@ -104,12 +114,20 @@ func (ms *ManifestSpec) Validate() error {
 	if len(ms.Image) == 0 {
 		return fmt.Errorf("no top-level image provided")
 	}
-	validateTagOfImage(ms.Image)
+
+	err := validateTagOfImage(ms.Image)
+	if err != nil {
+		return err
+	}
+
 	// check if tags are provided
 	if len(ms.Manifests) > 0 {
 		// check each tag value for valid docker tag syntax
 		for _, compManifest := range ms.Manifests {
-			validateTagOfImage(compManifest.Image)
+			err = validateTagOfImage(compManifest.Image)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		return fmt.Errorf("no component images provided")
