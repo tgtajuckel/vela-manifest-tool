@@ -31,28 +31,100 @@ func TestManifestSpec_New_Validate(t *testing.T) {
 	}
 }
 
-func defaultFixture(t *testing.T) ManifestSpec {
-	registry := Registry{
+func TestManifestSpec_Validations(t *testing.T) {
+	testCases := []struct {
+		name  string
+		valid bool
+		avail bool
+		ms    *ManifestSpec
+	}{
+		{
+			name:  "missing image",
+			valid: false,
+			avail: true,
+			ms:    trMS(t, func(ms *ManifestSpec) *ManifestSpec { ms.Image = ""; return ms }),
+		},
+		{
+			name:  "missing repo",
+			valid: false,
+			avail: true,
+			ms:    trMS(t, func(ms *ManifestSpec) *ManifestSpec { ms.Image = ""; return ms }),
+		},
+		{
+			name:  "invalid platform",
+			valid: false,
+			avail: false,
+			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
+				r.Platforms = []string{"linux"}
+				return r
+			}))),
+		},
+	}
+	for _, tc := range testCases {
+		if tc.avail && tc.ms == nil {
+			t.Errorf("%s: expected manifest spec to be available, but none returned", tc.name)
+		} else if !tc.avail && tc.ms != nil {
+			t.Errorf("%s: expected no manifest specs, but at least one returned", tc.name)
+		} else if tc.avail && tc.ms != nil {
+			err := tc.ms.Validate()
+			if err != nil && tc.valid {
+				t.Errorf("%s: expected valid ManifestSpec, but got %v", tc.name, err)
+			} else if err == nil && !tc.valid {
+				t.Errorf("%s: expected invalid ManifestSpec, but got nil", tc.name)
+			}
+		}
+	}
+}
+
+func firstMS(ms []*ManifestSpec, _ error) *ManifestSpec {
+	if len(ms) > 0 {
+		return ms[0]
+	} else {
+		return nil
+	}
+}
+
+func defaultRegistry() *Registry {
+	return &Registry{
 		Name:      "index.docker.io",
 		Username:  "test",
 		Password:  "pass",
 		PushRetry: 1,
 		DryRun:    true,
 	}
-	repo := Repo{
+}
+
+func defaultRepo() *Repo {
+	return &Repo{
 		Name:              "/octocat/hello-world",
 		Tags:              []string{"latest"},
 		Platforms:         []string{"linux/amd64", "linux/arm64/v8"},
 		ComponentTemplate: "{{.Repo}}:{{.Tag}}-{{.Os}}-{{.Arch}}{{if .Variant}}-{{.Variant}}{{end}}",
 	}
-	ms, err := NewManifestSpec(&registry, &repo)
+}
+
+func defaultFixture(t *testing.T) *ManifestSpec {
+	ms, err := NewManifestSpec(defaultRegistry(), defaultRepo())
 	if err != nil {
 		t.Fatalf("error encountered: %v", err)
 	}
 	if len(ms) != 1 {
 		t.Fatalf("should only have returned a single manifest spec")
 	}
-	return (ms)[0]
+	return ms[0]
+}
+
+// Translate ManifestSpec
+func trMS(t *testing.T, f func(*ManifestSpec) *ManifestSpec) *ManifestSpec {
+	return f(defaultFixture(t))
+}
+
+func trReg(f func(r *Registry) *Registry) *Registry {
+	return f(defaultRegistry())
+}
+
+func trRep(f func(r *Repo) *Repo) *Repo {
+	return f(defaultRepo())
 }
 
 func assertImageMatch(t *testing.T, expected, actual string) {

@@ -52,11 +52,11 @@ type ComponentContext struct {
 	Variant string
 }
 
-func NewManifestSpec(reg *Registry, repo *Repo) ([]ManifestSpec, error) {
-	specs := []ManifestSpec{}
+func NewManifestSpec(reg *Registry, repo *Repo) ([]*ManifestSpec, error) {
+	specs := []*ManifestSpec{}
 	tmpl, err := template.New("component_template").Parse(repo.ComponentTemplate)
 	if err != nil {
-		return nil, err
+		return specs, err
 	}
 	for _, tag := range repo.Tags {
 		ms := ManifestSpec{
@@ -92,11 +92,7 @@ func NewManifestSpec(reg *Registry, repo *Repo) ([]ManifestSpec, error) {
 			}
 			ms.Manifests = append(ms.Manifests, comp)
 		}
-		err = ms.Validate()
-		if err != nil {
-			return nil, err
-		}
-		specs = append(specs, ms)
+		specs = append(specs, &ms)
 	}
 	return specs, nil
 }

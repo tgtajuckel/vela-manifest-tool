@@ -48,5 +48,6 @@ func (r *Repo) Validate() error {
 	} else {
 		return fmt.Errorf("no platforms provided")
 	}
+
 	return nil
 }

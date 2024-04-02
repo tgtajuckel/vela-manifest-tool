@@ -70,3 +70,15 @@ func TestDocker_Repo_Validate_NoPlatforms(t *testing.T) {
 		t.Errorf("Validate should have returned err")
 	}
 }
+
+func TestDocker_Repo_InvalidPlatform(t *testing.T) {
+	r := &Repo{
+		Name:      "/target/vela-manifest-tool",
+		Tags:      []string{"latest"},
+		Platforms: []string{"windows/riscv64"},
+	}
+	err := r.Validate()
+	if err == nil {
+		t.Errorf("Validate should have returned an err")
+	}
+}

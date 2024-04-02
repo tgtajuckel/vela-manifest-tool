@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -13,15 +14,19 @@ import (
 
 const manifestToolBin = "/manifest-tool"
 
+// private variables just for test mocking
+var stdout io.Writer = os.Stdout
+var stderr io.Writer = os.Stderr
+
 // execCmd is a helper function to
 // run the provided command.
 func execCmd(e *exec.Cmd) error {
 	logrus.Tracef("executing cmd %s", strings.Join(e.Args, " "))
 
 	// set command stdout to OS stdout
-	e.Stdout = os.Stdout
+	e.Stdout = stdout
 	// set command stderr to OS stderr
-	e.Stderr = os.Stderr
+	e.Stderr = stderr
 
 	// output "trace" string for command
 	fmt.Println("$", strings.Join(e.Args, " "))

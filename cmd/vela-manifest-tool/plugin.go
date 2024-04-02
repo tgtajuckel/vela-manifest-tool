@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -29,10 +30,9 @@ const errTagValidation = "tag '%s' not allowed - see https://docs.docker.com/eng
 
 // Plugin represents the configuration loaded for the plugin.
 type Plugin struct {
-	// registry arguments loaded for the plugin
-	Registry *Registry
-	// repo arguments loaded for the plugin
-	Repo *Repo
+	Registry      *Registry       // registry arguments loaded for the plugin
+	Repo          *Repo           // repo arguments loaded for the plugin
+	manifestSpecs []*ManifestSpec // Parsed specs, populated as side effect of validate
 }
 
 // Command formats and outputs the command necessary for
@@ -54,6 +54,10 @@ func (p *Plugin) Command(specFile string) *exec.Cmd {
 // Exec formats and runs the commands for building and publishing a Docker image.
 func (p *Plugin) Exec() error {
 	logrus.Debug("running plugin with provided configuration")
+
+	if len(p.manifestSpecs) == 0 {
+		return errors.New("no manifest specs")
+	}
 
 	// create registry file for authentication
 	err := p.Registry.Write()
@@ -111,18 +115,6 @@ func (p *Plugin) Validate() error {
 
 	var err error
 
-	// validate build configuration
-	/*err := p.Build.Validate()
-	if err != nil {
-		return err
-	}*/
-
-	// validate image configuration
-	/*err = p.Image.Validate()
-	if err != nil {
-		return err
-	}*/
-
 	// validate registry configuration
 	err = p.Registry.Validate()
 	if err != nil {
@@ -134,6 +126,19 @@ func (p *Plugin) Validate() error {
 	if err != nil {
 		return err
 	}
+
+	manifestSpecs, err := NewManifestSpec(p.Registry, p.Repo)
+	for _, ms := range manifestSpecs {
+		err = ms.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+	p.manifestSpecs = manifestSpecs
 
 	return nil
 }

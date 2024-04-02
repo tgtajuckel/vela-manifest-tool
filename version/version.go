@@ -43,6 +43,7 @@ func New() *version.Version {
 	v, err := semver.NewVersion(Tag)
 	if err != nil {
 		fmt.Println(fmt.Errorf("unable to parse semantic version for %s: %w", Tag, err))
+		return nil
 	}
 
 	return &version.Version{
