@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# TODO: FILL ME WITH manifest-tool EXAMPLE USAGE
+
+## Template Variables
+# - .image      (default: "target/vela-manifest-tool:latest")
+# - .pull       (default: true)
+# - .log_level  (default: "info")
+# - .auto_tag   (default: false)
+# - .build_args (default: [])
+# - .cache      (default: false)
+# - .cache_repo (default: "")
+# - .context    (default: ".")
+# - .dockerfile (default: "Dockerfile")
+# - .dry_run    (default: false)
+# - .registry   (default: "")
+# - .repo       (default: "")
+# - .tags       (default: "")
+
+metadata:
+  template: true
+
+steps:
+  - name: docker_plugin_template
+    image: {{ default "target/vela-manifest-tool:latest" .image }}
+    pull: {{ default "true" .pull }}
+    parameters:
+      log_level: {{ default "info" .log_level }}
+      auto_tag: {{ default "false" .auto_tag }}
+      build_args: {{ default "[]" .build_args }}
+      cache: {{ default "false" .cache }}
+      cache_repo: {{ default "" .cache_repo }}
+      context: {{ default "." .context }}
+      dockerfile: {{ default "Dockerfile" .dockerfile }}
+      dry_run: {{ default "false" .dry_run }}
+      registry: {{ default "index.docker.io" .registry }}
+      repo: {{ default "" .repo }}
+      tags: {{ default "[ latest ]" .tags }}
