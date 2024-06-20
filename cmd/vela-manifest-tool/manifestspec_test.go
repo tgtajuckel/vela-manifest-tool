@@ -87,11 +87,38 @@ func TestManifestSpec_Validations(t *testing.T) {
 			}))),
 		},
 		{
+			name:  "no platforms",
+			valid: false,
+			avail: true,
+			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
+				r.Platforms = []string{}
+				return r
+			}))),
+		},
+		{
+			name:  "no tags",
+			valid: false,
+			avail: false,
+			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
+				r.Tags = []string{}
+				return r
+			}))),
+		},
+		{
 			name:  "incomplete template",
 			valid: false,
 			avail: true,
 			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
 				r.ComponentTemplate = "{{.Repo}}"
+				return r
+			}))),
+		},
+		{
+			name:  "invalid tag",
+			valid: false,
+			avail: true,
+			ms: firstMS(NewManifestSpec(defaultRegistry(), trRep(func(r *Repo) *Repo {
+				r.Tags = []string{"invalid|tag"}
 				return r
 			}))),
 		},

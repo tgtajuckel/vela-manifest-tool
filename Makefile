@@ -130,6 +130,16 @@ build-static:
 		-o release/vela-manifest-tool \
 		github.com/go-vela/vela-manifest-tool/cmd/vela-manifest-tool
 
+.PHONY: build-static-amd64
+build-static-amd64:
+	@echo
+	@echo "### Building static release/vela-manifest-tool binary"
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+		go build -a \
+		-ldflags '-s -w -extldflags "-static" ${LD_FLAGS}' \
+		-o release/vela-manifest-tool \
+		github.com/go-vela/vela-manifest-tool/cmd/vela-manifest-tool
+
 # The `build-static-ci` target is intended to compile
 # the Go source code into a statically linked binary
 # when used within a CI environment.
